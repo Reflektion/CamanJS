@@ -49,45 +49,39 @@ class CamanInstance
       
   ########## Begin Image Loading ##########
   
-  loadImage: (id, callback = ->) ->   
-    if typeof id is "object" and id.nodeName?.toLowerCase() is "img"
-      image = id
+  loadImage: (sel, callback = ->) ->   
+    if typeof sel is "object" and sel.nodeName?.toLowerCase() is "img"
+      image = sel
       image.id = "caman-#{Util.uniqid.get()}" unless image.id
-      id = image.id
     else
-      if $(id)?
-        image = $(id)
-      else
-        throw "Could not find element #{id}"
+      image = $(sel)
+      if not image
+        throw "Could not find element #{sel}"
+      if image.nodeName.toLowerCase() isnt "img"
+        throw "Given element ID isn't an image: #{sel}"
 
     proxyURL = IO.remoteCheck image.src
     if proxyURL
-      image.onload = => @imageLoaded id, image, callback
+      image.onload = => @imageLoaded image, callback
       image.src = proxyURL
     else
       if image.complete
-        @imageLoaded id, image, callback
+        @imageLoaded image, callback
       else
-        image.onload = => @imageLoaded id, image, callback
+        image.onload = => @imageLoaded image, callback
         
-  imageLoaded: (id, image, callback) ->
+  imageLoaded: (image, callback) ->
     @image = image
-
-    if not image or image.nodeName.toLowerCase() isnt "img"
-      throw "Given element ID isn't an image: #{id}"
-    
     @canvas = document.createElement 'canvas'
-    @canvas.id = image.id
+    @canvasID = @canvas.id = image.id
     
     for attr in ['data-camanwidth', 'data-camanheight']
       @canvas.setAttribute attr, @image.getAttribute(attr) if @image.getAttribute attr
-    
 
     image.parentNode.replaceChild @canvas, @image if image.parentNode?
     
-    @canvasID = id
     @options =
-      canvas: id
+      canvas: @canvas.id
       image: @image.src
       
     @finishInit callback
@@ -96,35 +90,30 @@ class CamanInstance
   
   ########## Begin Canvas Loading ##########
   
-  loadCanvas: (url, id, callback = ->) ->
-    if typeof id is "object" and id.nodeName?.toLowerCase() is "canvas"
-      element = id
+  loadCanvas: (url, sel, callback = ->) ->
+    if typeof sel is "object" and sel.nodeName?.toLowerCase() is "canvas"
+      element = sel
       element.id = "caman-#{Util.uniqid.get()}" unless element.id
     else
-      if $(id)?
-        element = $(id)
-      else
-        throw "Could not find element #{id}"
+      element = $(sel)
+      if not element
+        throw "Could not find element #{sel}"
+      if element.nodeName.toLowerCase() isnt "canvas"
+        throw "Given element ID isn't a canvas: #{sel}"
 
     @canvasLoaded url, element, callback
       
   canvasLoaded: (url, canvas, callback) ->
     @canvas = canvas
+    @canvasID = @canvas.id
+    @options =
+      canvas: canvas.id
 
-    if not canvas or canvas.nodeName.toLowerCase() isnt "canvas"
-      throw "Given element ID isn't a canvas: #{id}"
-    
     if url?
+      @options.image = url
       @image = document.createElement 'img'
       @image.onload = => @finishInit callback
-      
       proxyURL = IO.remoteCheck(url)
-      
-      @canvasID = @canvas.id
-      @options =
-        canvas: canvas.id
-        image: url
-        
       @image.src = if proxyURL then proxyURL else url
     else
       @finishInit callback

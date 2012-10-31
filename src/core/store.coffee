@@ -4,7 +4,9 @@ class Store
   @items = {}
 
   @getId: (search) ->
-    if typeof search is "object" then search.id else search
+    # If image or canvas object, use its ID.
+    # If selector string, slice off the leading '#'.
+    if typeof search is "object" then search.id else search.slice(1)
   
   @has: (search) -> @items[@getId(search)]?
   @get: (search) -> @items[@getId(search)]
