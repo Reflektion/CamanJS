@@ -53,6 +53,7 @@ class CamanInstance
     if typeof id is "object" and id.nodeName?.toLowerCase() is "img"
       image = id
       image.id = "caman-#{Util.uniqid.get()}" unless image.id
+      id = image.id
     else
       if $(id)?
         image = $(id)
