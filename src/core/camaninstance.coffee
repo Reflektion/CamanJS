@@ -198,6 +198,7 @@ class CamanInstance
   replaceCanvas: (newCanvas) ->
     oldCanvas = @canvas
     @canvas = newCanvas
+    @canvasID = @canvas.id = oldCanvas.id
 
     if oldCanvas.parentNode?
       oldCanvas.parentNode.replaceChild @canvas, oldCanvas
