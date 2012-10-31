@@ -73,7 +73,7 @@ class CamanInstance
   imageLoaded: (image, callback) ->
     @image = image
     @canvas = document.createElement 'canvas'
-    @canvasID = @canvas.id = image.id
+    @canvas.id = image.id
     
     for attr in ['data-camanwidth', 'data-camanheight']
       @canvas.setAttribute attr, @image.getAttribute(attr) if @image.getAttribute attr
@@ -105,7 +105,7 @@ class CamanInstance
       
   canvasLoaded: (url, canvas, callback) ->
     @canvas = canvas
-    @canvasID = @canvas.id
+    @canvas.id
     @options =
       canvas: canvas.id
 
@@ -125,8 +125,8 @@ class CamanInstance
     file = fs.realpathSync file if typeof file is "string"
 
     img.onload = =>
-      @canvasID = Util.uniqid.get()
       @canvas = new Canvas img.width, img.height
+      @canvas.id = Util.uniqid.get()
       
       context = @canvas.getContext '2d'
       context.drawImage img, 0, 0
@@ -178,7 +178,7 @@ class CamanInstance
       width: @canvas.width
       height: @canvas.height
       
-    Store.put @canvasID, @
+    Store.put @canvas.id, @
     
     # haha, owl face.
     callback.call @,@
@@ -187,7 +187,7 @@ class CamanInstance
   replaceCanvas: (newCanvas) ->
     oldCanvas = @canvas
     @canvas = newCanvas
-    @canvasID = @canvas.id = oldCanvas.id
+    @canvas.id = oldCanvas.id
 
     if oldCanvas.parentNode?
       oldCanvas.parentNode.replaceChild @canvas, oldCanvas
