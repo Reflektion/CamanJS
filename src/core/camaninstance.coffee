@@ -79,11 +79,7 @@ class CamanInstance
       @canvas.setAttribute attr, @image.getAttribute(attr) if @image.getAttribute attr
 
     image.parentNode.replaceChild @canvas, @image if image.parentNode?
-    
-    @options =
-      canvas: @canvas.id
-      image: @image.src
-      
+
     @finishInit callback
 
   ########## End Image Loading ##########
@@ -106,11 +102,8 @@ class CamanInstance
   canvasLoaded: (url, canvas, callback) ->
     @canvas = canvas
     @canvas.id
-    @options =
-      canvas: canvas.id
 
     if url?
-      @options.image = url
       @image = document.createElement 'img'
       @image.onload = => @finishInit callback
       proxyURL = IO.remoteCheck(url)
