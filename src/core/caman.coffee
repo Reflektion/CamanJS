@@ -28,17 +28,23 @@ Root.Caman = Caman = ->
 
   switch arguments.length
     when 1
+      # Caman("#image-id")
+      # Caman("#canvas-id")
       return Store.get(arguments[0]) if Store.has arguments[0]
-      return new CamanInstance arguments, CamanInstance.Type.Image
+      return new CamanInstance arguments, CamanInstance.Type.Unknown
     when 2
-      return Store.execute arguments[0], arguments[1] if Store.has arguments[0]
-      
+      # Caman("#image-id", function () {})
+      # Caman("#canvas-id", function () {})
+      # Caman("path/to/image.jpg", "#canvas-id")
       if typeof arguments[1] is 'function'
+        return Store.execute arguments[0], arguments[1] if Store.has arguments[0]
         return new CamanInstance(arguments, CamanInstance.Type.Unknown)
       else
+        #return Store.get(arguments[1]) if Store.hasMatchURL arguments[1], arguments[0]
         return new CamanInstance(arguments, CamanInstance.Type.Canvas)
     when 3
-      return Store.execute arguments[1], arguments[2] if Store.has arguments[0]
+      # Caman("path/to/image.jpg", "#canvas-id", function () {})
+      #return Store.execute arguments[1], arguments[2] if Store.hasMatchURL arguments[1], arguments[0]
       return new CamanInstance(arguments, CamanInstance.Type.Canvas)
     
 Caman.version =
