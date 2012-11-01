@@ -77,21 +77,18 @@
         if (Store.has(arguments[0])) {
           return Store.get(arguments[0]);
         }
-        return new CamanInstance(arguments, CamanInstance.Type.Image);
+        return new CamanInstance(arguments, CamanInstance.Type.Unknown);
       case 2:
-        if (Store.has(arguments[0])) {
-          return Store.execute(arguments[0], arguments[1]);
-        }
         if (typeof arguments[1] === 'function') {
+          if (Store.has(arguments[0])) {
+            return Store.execute(arguments[0], arguments[1]);
+          }
           return new CamanInstance(arguments, CamanInstance.Type.Unknown);
         } else {
           return new CamanInstance(arguments, CamanInstance.Type.Canvas);
         }
         break;
       case 3:
-        if (Store.has(arguments[0])) {
-          return Store.execute(arguments[1], arguments[2]);
-        }
         return new CamanInstance(arguments, CamanInstance.Type.Canvas);
     }
   };
@@ -175,47 +172,46 @@
       }
     };
 
-    CamanInstance.prototype.loadImage = function(id, callback) {
+    CamanInstance.prototype.loadImage = function(sel, callback) {
       var image, proxyURL, _ref,
         _this = this;
       if (callback == null) {
         callback = function() {};
       }
-      if (typeof id === "object" && ((_ref = id.nodeName) != null ? _ref.toLowerCase() : void 0) === "img") {
-        image = id;
+      if (typeof sel === "object" && ((_ref = sel.nodeName) != null ? _ref.toLowerCase() : void 0) === "img") {
+        image = sel;
         if (!image.id) {
           image.id = "caman-" + (Util.uniqid.get());
         }
       } else {
-        if ($(id) != null) {
-          image = $(id);
-        } else {
-          throw "Could not find element " + id;
+        image = $(sel);
+        if (!image) {
+          throw "Could not find element " + sel;
+        }
+        if (image.nodeName.toLowerCase() !== "img") {
+          throw "Given element ID isn't an image: " + sel;
         }
       }
       proxyURL = IO.remoteCheck(image.src);
       if (proxyURL) {
         image.onload = function() {
-          return _this.imageLoaded(id, image, callback);
+          return _this.imageLoaded(image, callback);
         };
         return image.src = proxyURL;
       } else {
         if (image.complete) {
-          return this.imageLoaded(id, image, callback);
+          return this.imageLoaded(image, callback);
         } else {
           return image.onload = function() {
-            return _this.imageLoaded(id, image, callback);
+            return _this.imageLoaded(image, callback);
           };
         }
       }
     };
 
-    CamanInstance.prototype.imageLoaded = function(id, image, callback) {
+    CamanInstance.prototype.imageLoaded = function(image, callback) {
       var attr, _i, _len, _ref;
       this.image = image;
-      if (!image || image.nodeName.toLowerCase() !== "img") {
-        throw "Given element ID isn't an image: " + id;
-      }
       this.canvas = document.createElement('canvas');
       this.canvas.id = image.id;
       _ref = ['data-camanwidth', 'data-camanheight'];
@@ -228,29 +224,26 @@
       if (image.parentNode != null) {
         image.parentNode.replaceChild(this.canvas, this.image);
       }
-      this.canvasID = id;
-      this.options = {
-        canvas: id,
-        image: this.image.src
-      };
       return this.finishInit(callback);
     };
 
-    CamanInstance.prototype.loadCanvas = function(url, id, callback) {
+    CamanInstance.prototype.loadCanvas = function(url, sel, callback) {
       var element, _ref;
       if (callback == null) {
         callback = function() {};
       }
-      if (typeof id === "object" && ((_ref = id.nodeName) != null ? _ref.toLowerCase() : void 0) === "canvas") {
-        element = id;
+      if (typeof sel === "object" && ((_ref = sel.nodeName) != null ? _ref.toLowerCase() : void 0) === "canvas") {
+        element = sel;
         if (!element.id) {
           element.id = "caman-" + (Util.uniqid.get());
         }
       } else {
-        if ($(id) != null) {
-          element = $(id);
-        } else {
-          throw "Could not find element " + id;
+        element = $(sel);
+        if (!element) {
+          throw "Could not find element " + sel;
+        }
+        if (element.nodeName.toLowerCase() !== "canvas") {
+          throw "Given element ID isn't a canvas: " + sel;
         }
       }
       return this.canvasLoaded(url, element, callback);
@@ -260,20 +253,13 @@
       var proxyURL,
         _this = this;
       this.canvas = canvas;
-      if (!canvas || canvas.nodeName.toLowerCase() !== "canvas") {
-        throw "Given element ID isn't a canvas: " + id;
-      }
+      this.canvas.id;
       if (url != null) {
         this.image = document.createElement('img');
         this.image.onload = function() {
           return _this.finishInit(callback);
         };
         proxyURL = IO.remoteCheck(url);
-        this.canvasID = this.canvas.id;
-        this.options = {
-          canvas: canvas.id,
-          image: url
-        };
         return this.image.src = proxyURL ? proxyURL : url;
       } else {
         return this.finishInit(callback);
@@ -289,8 +275,8 @@
       }
       img.onload = function() {
         var context;
-        _this.canvasID = Util.uniqid.get();
         _this.canvas = new Canvas(img.width, img.height);
+        _this.canvas.id = Util.uniqid.get();
         context = _this.canvas.getContext('2d');
         context.drawImage(img, 0, 0);
         return _this.finishInit(callback);
@@ -339,7 +325,7 @@
         width: this.canvas.width,
         height: this.canvas.height
       };
-      Store.put(this.canvasID, this);
+      Store.put(this.canvas.id, this);
       callback.call(this, this);
       return this;
     };
@@ -348,6 +334,7 @@
       var oldCanvas;
       oldCanvas = this.canvas;
       this.canvas = newCanvas;
+      this.canvas.id = oldCanvas.id;
       if (oldCanvas.parentNode != null) {
         oldCanvas.parentNode.replaceChild(this.canvas, oldCanvas);
       }
@@ -974,7 +961,7 @@
     };
 
     Filter.prototype.revert = function(ready) {
-      return this.loadCanvas(this.options.image, this.canvas, ready);
+      return this.loadCanvas(this.image.src, this.canvas, ready);
     };
 
     Filter.prototype.process = function(name, processFn) {
@@ -1614,12 +1601,20 @@
 
     Store.items = {};
 
+    Store.getId = function(search) {
+      if (typeof search === "object") {
+        return search.id;
+      } else {
+        return search.slice(1);
+      }
+    };
+
     Store.has = function(search) {
-      return this.items[search] != null;
+      return this.items[this.getId(search)] != null;
     };
 
     Store.get = function(search) {
-      return this.items[search];
+      return this.items[this.getId(search)];
     };
 
     Store.put = function(name, obj) {
